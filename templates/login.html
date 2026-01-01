@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+
+  <!-- Flask-safe CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="login-wrapper">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="left-overlay"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="login-box">
+
+      <!-- Flask-safe image -->
+      <img src="{{ url_for('static', filename='image/college-logo.png') }}"
+           class="college-logo"
+           alt="College Logo">
+
+      <h2>Welcome</h2>
+      <span>Login with User ID</span>
+
+      <div class="input-box">
+        <i class="fa fa-user"></i>
+        <input type="text" id="username" placeholder="User ID / Roll No">
+      </div>
+
+      <div class="input-box">
+        <i class="fa fa-lock"></i>
+        <input type="password" id="password" placeholder="Password">
+      </div>
+
+      <button class="login-btn" onclick="login()">LOGIN</button>
+
+      <p id="error" style="color:red; margin-top:10px;"></p>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function login() {
+  fetch("/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: document.getElementById("username").value.trim(),
+      password: document.getElementById("password").value.trim()
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      document.getElementById("error").innerText =
+        "Invalid Username or Password";
+      return;
+    }
+
+    window.location.href =
+      data.role === "admin" ? "/admin" : "/dashboard";
+  })
+  .catch(() => {
+    document.getElementById("error").innerText =
+      "Server error. Try again.";
+  });
+}
+</script>
+
+</body>
+</html>

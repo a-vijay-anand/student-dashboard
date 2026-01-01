@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+
+<div class="dashboard-container">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="profile">
+      <img src="static/image/profile icon.png" alt="Admin">
+      <h3>Admin</h3>
+      <p>Academic Panel</p>
+    </div>
+
+    <nav>
+      <a class="active">Data Entry</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+  </aside>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-content">
+
+    <h1 class="page-title">Academic Data Entry</h1>
+
+    <div class="admin-wrapper">
+
+      <!-- ========== STUDENT DETAILS CARD ========== -->
+      <div class="admin-card">
+        <h2>Student Details</h2>
+
+        <label>Roll Number</label>
+        <input type="text" id="roll" placeholder="Enter Roll Number">
+
+        <label>Name</label>
+        <input type="text" id="name" placeholder="Enter Name">
+
+        <label>Section</label>
+        <input type="text" id="section" placeholder="Enter Section">
+
+        <label>Attendance (%)</label>
+        <input type="number" id="attendance" min="0" max="100">
+
+        <label>Assignments (out of 3)</label>
+        <input type="number" id="assignments" min="0" max="3">
+      </div>
+
+      <!-- ========== EXAM & MARKS CARD ========== -->
+      <div class="admin-card">
+        <h2>Exam & Marks Entry</h2>
+
+        <label>Select Exam</label>
+        <select id="exam" onchange="showExamInputs()">
+          <option value="">-- Select Exam --</option>
+          <option value="cat1">CAT-1</option>
+          <option value="cat2">CAT-2</option>
+          <option value="model">Model Exam</option>
+        </select>
+
+        <h3 id="examTitle"></h3>
+
+        <!-- SUBJECT MARKS -->
+        <div id="subjects" class="subjects-grid" style="display:none;">
+          <input type="number" id="s1" placeholder="Probability and Statistics">
+          <input type="number" id="s2" placeholder="Machine Learning Algorithms">
+          <input type="number" id="s3" placeholder="AI & Intelligent Systems">
+          <input type="number" id="s4" placeholder="Research Methodology & IPR">
+          <input type="number" id="s5" placeholder="Computing Systems for Data Science">
+          <input type="number" id="s6" placeholder="Python for Data Science">
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="btn-group">
+          <button class="save-btn" onclick="saveData()">Save Academic Data</button>
+          <button class="reset-btn" onclick="resetSubjects()">Reset Marks</button>
+        </div>
+
+        <!-- MESSAGE -->
+        <p id="result"></p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+const resultEl = document.getElementById("result");
+
+function showExamInputs() {
+  const exam = document.getElementById("exam").value;
+  if (!exam) return;
+
+  document.getElementById("examTitle").innerText =
+    exam === "cat1" ? "CAT-1 Marks" :
+    exam === "cat2" ? "CAT-2 Marks" :
+    "Model Exam Marks";
+
+  document.getElementById("subjects").style.display = "grid";
+}
+
+function resetSubjects() {
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById("s" + i).value = "";
+  }
+  resultEl.innerText = "";
+}
+
+async function saveData() {
+  resultEl.style.color = "black";
+  resultEl.innerText = "Saving data...";
+
+  const exam = document.getElementById("exam").value;
+  if (!exam) {
+    resultEl.innerText = "❌ Please select exam";
+    resultEl.style.color = "red";
+    return;
+  }
+
+  const marks = [];
+  for (let i = 1; i <= 6; i++) {
+    const v = document.getElementById("s" + i).value;
+    if (!v) {
+      resultEl.innerText = "❌ Enter all subject marks";
+      resultEl.style.color = "red";
+      return;
+    }
+    marks.push(Number(v));
+  }
+
+  const payload = {
+    roll: document.getElementById("roll").value,
+    name: document.getElementById("name").value,
+    section: document.getElementById("section").value,
+    attendance: Number(document.getElementById("attendance").value),
+    assignments: Number(document.getElementById("assignments").value),
+    exam: exam,
+    marks: marks
+  };
+
+  try {
+    const res = await fetch("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(payload)
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      resultEl.innerText = "❌ Session expired. Please login again.";
+      resultEl.style.color = "red";
+      return;
+    }
+
+    if (!res.ok) {
+      resultEl.innerText = "❌ " + (data.message || "Error saving data");
+      resultEl.style.color = "red";
+      return;
+    }
+
+    resultEl.innerText = data.message;
+    resultEl.style.color = "green";
+
+  } catch (err) {
+    resultEl.innerText = "❌ Server error. Try again.";
+    resultEl.style.color = "red";
+  }
+}
+</script>
+
+</body>
+</html>

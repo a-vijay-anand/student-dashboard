@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2 class="logo">Student</h2>
+
+    <div class="profile">
+      <div class="avatar"></div>
+      <h3 id="studentName">Student</h3>
+      <p id="studentRoll">Roll No</p>
+    </div>
+
+    <nav>
+      <a class="active" onclick="showSection('dashboard', this)">Dashboard</a>
+      <a onclick="showSection('analysis', this)">Report Analysis</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <section id="dashboardSection">
+
+      <div class="stats-container">
+        <div class="stat-card"><h4>Attendance</h4><p id="attendance">--%</p></div>
+        <div class="stat-card"><h4>Assignments</h4><p id="assignments">-- / 3</p></div>
+        <div class="stat-card"><h4>GPA</h4><p id="gpa">--</p></div>
+      </div>
+
+      <div class="exam-buttons">
+        <button onclick="loadExam('cat1')">CAT-1</button>
+        <button onclick="loadExam('cat2')">CAT-2</button>
+        <button onclick="loadExam('model')">Model</button>
+      </div>
+
+      <div class="table-container">
+        <h3 id="examTitle">Select an Exam</h3>
+        <p id="noDataMsg">No data available for this exam</p>
+
+        <table id="marksTableBox">
+          <thead>
+            <tr><th>Subject</th><th>Marks</th></tr>
+          </thead>
+          <tbody id="marksTable"></tbody>
+        </table>
+      </div>
+
+      <div class="chart-container" id="chartBox">
+        <canvas id="marksChart"></canvas>
+      </div>
+    </section>
+
+    <!-- REPORT ANALYSIS -->
+    <section id="analysisSection" style="display:none;">
+
+      <h2 class="analysis-title">AI Performance Analysis</h2>
+
+      <!-- SUMMARY -->
+      <div class="ai-summary">
+        <div class="ai-box"><h4>Attendance</h4><p id="aiAttendance">0</p></div>
+        <div class="ai-box"><h4>Average Marks</h4><p id="aiAvg">0</p></div>
+        <div class="ai-box"><h4>Assignments</h4><p id="aiAssign">0</p></div>
+      </div>
+
+      <!-- AI RESULT -->
+      <div class="ai-main-card">
+        <h3>AI Predicted Performance</h3>
+        <div class="ai-meter"><div class="meter-fill" id="meterFill"></div></div>
+        <p class="ai-result" id="aiResult">Loading...</p>
+        <p>Confidence Level: <span id="aiConfidence">--%</span></p>
+      </div>
+
+      <!-- TREND -->
+      <div class="ai-graph-card">
+        <h3>Performance Trend</h3>
+        <canvas id="trendChart"></canvas>
+      </div>
+
+      <!-- SUBJECT INSIGHTS -->
+      <div class="ai-explain-card">
+        <h3>Subject-wise Insights</h3>
+        <div id="aiTags"></div>
+      </div>
+
+      <!-- AI SUGGESTIONS -->
+      <div class="ai-explain-card">
+        <h3>AI Suggestions</h3>
+        <div id="suggestions"></div>
+      </div>
+
+      <!-- RISK -->
+      <div class="ai-risk-card">
+        <h3>AI Risk Assessment</h3>
+        <p id="aiRisk">--</p>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script>
+let studentData={}, chart, trendChart;
+
+const subjects=[
+  "Probability & Statistics","Machine Learning Algorithms",
+  "AI & Intelligent Systems","Research Methodology & IPR",
+  "Computing Systems for DS","Python for Data Science"
+];
+
+function showSection(sec,el){
+  dashboardSection.style.display=sec==="dashboard"?"block":"none";
+  analysisSection.style.display=sec==="analysis"?"block":"none";
+  document.querySelectorAll("nav a").forEach(a=>a.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* LOAD STUDENT */
+fetch("/student/data").then(r=>r.json()).then(res=>{
+  studentData=res.data;
+  studentName.innerText=studentData.name;
+  studentRoll.innerText="Roll No: "+studentData.roll;
+  attendance.innerText=studentData.attendance+"%";
+  assignments.innerText=studentData.assignments+" / 3";
+  calcGPA();
+});
+
+function calcGPA(){
+  let m=[];
+  ["cat1","cat2","model"].forEach(e=>studentData[e]?.length&&m.push(...studentData[e]));
+  gpa.innerText=m.length?(m.reduce((a,b)=>a+b)/m.length/10).toFixed(2):"--";
+}
+
+/* EXAM VIEW */
+function loadExam(exam){
+  const m=studentData[exam];
+  examTitle.innerText=exam.toUpperCase()+" Marks";
+  if(!m||!m.length){
+    noDataMsg.style.display="block";
+    marksTableBox.style.display="none";
+    chartBox.style.display="none";
+    if(chart)chart.destroy();
+    return;
+  }
+  noDataMsg.style.display="none";
+  marksTableBox.style.display="table";
+  chartBox.style.display="block";
+  marksTable.innerHTML="";
+  subjects.forEach((s,i)=>marksTable.innerHTML+=`<tr><td>${s}</td><td>${m[i]}</td></tr>`);
+  drawBar(m);
+}
+
+function drawBar(m){
+  if(chart)chart.destroy();
+  chart=new Chart(marksChart,{
+    type:"bar",
+    data:{labels:subjects,datasets:[{data:m,backgroundColor:["#ff6384","#36a2eb","#4bc0c0","#ffcd56","#9966ff","#ff9f40"]}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100}}}
+  });
+}
+
+/* SUBJECT INSIGHTS */
+function generateInsights(){
+  let marks=studentData.model?.length?studentData.model:
+            studentData.cat2?.length?studentData.cat2:
+            studentData.cat1?.length?studentData.cat1:[];
+  let strong=[],avg=[],weak=[];
+  marks.forEach((m,i)=>{
+    if(m>=80)strong.push(subjects[i]);
+    else if(m>=60)avg.push(subjects[i]);
+    else weak.push(subjects[i]);
+  });
+
+  aiTags.innerHTML="";
+  if(strong.length)aiTags.innerHTML+=`<span class="tag strong">Strong: ${strong.join(", ")}</span>`;
+  if(avg.length)aiTags.innerHTML+=`<span class="tag average">Average: ${avg.join(", ")}</span>`;
+  if(weak.length)aiTags.innerHTML+=`<span class="tag weak">Needs Focus: ${weak.join(", ")}</span>`;
+}
+
+/* AI REPORT */
+fetch("/student/predict").then(r=>r.json()).then(d=>{
+  aiAttendance.innerText=d.attendance;
+  aiAvg.innerText=Math.round(d.average_marks);
+  aiAssign.innerText=d.assignments;
+
+  let score=d.prediction==="Excellent"?92:d.prediction==="Good"?78:d.prediction==="Average"?60:40;
+  meterFill.style.width=score+"%";
+  aiResult.innerText=d.prediction;
+  aiConfidence.innerText=score+"%";
+
+  /* Dynamic suggestions (no bullets) */
+  let s=[];
+  if(d.attendance<75)s.push("Attendance consistency should be improved.");
+  if(d.average_marks<80)s.push("Focus more on low scoring subjects.");
+  if(d.assignments<2)s.push("Regular assignment completion is required.");
+  if(!s.length)s.push("Current academic performance is satisfactory.");
+  suggestions.innerHTML=s.join("<br>");
+
+  aiRisk.innerText=d.prediction==="Excellent"?"Low Risk":
+                  d.prediction==="Average"?"Medium Risk":"High Risk";
+
+  generateInsights();
+
+  const avg=(arr)=>arr?.length?arr.reduce((a,b)=>a+b)/arr.length:0;
+  drawTrend(avg(studentData.cat1),avg(studentData.cat2),avg(studentData.model));
+});
+
+/* TREND */
+function drawTrend(a,b,c){
+  if(trendChart)trendChart.destroy();
+  trendChart=new Chart(document.getElementById("trendChart"),{
+    type:"line",
+    data:{labels:["CAT-1","CAT-2","Model"],datasets:[{data:[a,b,c],borderColor:"#4f9cff",fill:true,tension:.4}]},
+    options:{scales:{y:{beginAtZero:true,max:100}}}
+  });
+}
+</script>
+</body>
+</html>

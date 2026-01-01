@@ -1,0 +1,148 @@
+/* ===============================
+   RESET & BASE
+================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  background: #eef2f7;
+}
+
+/* ===============================
+   MAIN WRAPPER
+================================ */
+.login-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+/* ===============================
+   LEFT PANEL (IMAGE)
+================================ */
+.left-panel {
+  width: 50%;
+  position: relative;
+  background-image: url("/static/image/left_panel_bg.png");
+  background-size: cover;
+  background-position: center;
+}
+
+/* ===============================
+   RIGHT PANEL
+================================ */
+.right-panel {
+  width: 50%;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===============================
+   LOGIN BOX
+================================ */
+.login-box {
+  width: 380px;
+  background: #ffffff;
+  padding: 35px;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+/* Logo */
+.college-logo {
+  width: 90px;
+  margin-bottom: 15px;
+}
+
+/* Headings */
+.login-box h2 {
+  margin-bottom: 5px;
+  font-size: 26px;
+  color: #333;
+}
+
+.login-box span {
+  font-size: 14px;
+  color: #666;
+  display: block;
+  margin-bottom: 25px;
+}
+
+/* ===============================
+   INPUTS WITH ICONS
+================================ */
+.input-box {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.input-box i {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #777;
+}
+
+.input-box input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+}
+
+.input-box input:focus {
+  border-color: #0d6efd;
+}
+
+/* ===============================
+   LOGIN BUTTON
+================================ */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #0d6efd, #0047d4);
+  border: none;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(13, 110, 253, 0.4);
+}
+
+/* ===============================
+   ERROR MESSAGE
+================================ */
+#error {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* ===============================
+   RESPONSIVE (MOBILE)
+================================ */
+@media (max-width: 900px) {
+  .left-panel {
+    display: none;
+  }
+
+  .right-panel {
+    width: 100%;
+  }
+}
