@@ -1,14 +1,15 @@
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 import sqlite3
+import os
 
 app = Flask(__name__)
-app.secret_key = "secretkey123"
+app.secret_key = os.environ.get("SECRET_KEY", "secretkey123")
 
 DB_NAME = "students.db"
 
 # ================= DATABASE =================
 def get_db():
-    return sqlite3.connect(DB_NAME)
+    return sqlite3.connect(DB_NAME, check_same_thread=False)
 
 def init_db():
     conn = get_db()
@@ -92,7 +93,6 @@ def admin_save():
     conn = get_db()
     cur = conn.cursor()
 
-    # Save / update student
     cur.execute("""
     INSERT INTO students VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(roll) DO UPDATE SET
@@ -107,7 +107,6 @@ def admin_save():
 
     marks = data["marks"]
 
-    # Save / update marks
     cur.execute("""
     INSERT INTO marks VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(roll, exam) DO UPDATE SET
@@ -122,7 +121,7 @@ def admin_save():
     conn.commit()
     conn.close()
 
-    return jsonify({"message": "✅ Data saved / updated successfully"})
+    return jsonify({"message": "Data saved successfully"})
 
 # ================= STUDENT =================
 @app.route("/dashboard")
@@ -187,9 +186,7 @@ def student_predict():
     rows = cur.fetchall()
     conn.close()
 
-    marks = []
-    for r in rows:
-        marks.extend(r)
+    marks = [m for r in rows for m in r]
 
     if not marks:
         return jsonify({
@@ -201,7 +198,6 @@ def student_predict():
 
     avg = sum(marks) / len(marks)
 
-    # ===== AI LOGIC =====
     if attendance >= 85 and avg >= 80 and assignments >= 2:
         result = "Excellent"
     elif attendance >= 70 and avg >= 65:
@@ -224,6 +220,5 @@ def logout():
     session.clear()
     return redirect(url_for("login_page"))
 
-# ================= RUN =================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
